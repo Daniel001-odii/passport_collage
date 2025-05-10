@@ -1,7 +1,8 @@
-import { createApp } from 'vue' import './assets/index.css' import App from
-'./App.vue' createApp(App).mount('#app')
 <template>
-  <div class="min-h-screen bg-slate-900 text-white p-4 md:p-8">
+  <div
+    class="min-h-screen bg-slate-900 text-white p-4 md:p-8"
+    style="zoom: 150%"
+  >
     <div class="max-w-6xl mx-auto">
       <!-- Header -->
       <header class="mb-8">
@@ -90,7 +91,7 @@ import { createApp } from 'vue' import './assets/index.css' import App from
             </div>
             <input
               type="range"
-              min="10"
+              min="2"
               max="20"
               v-model="spacing"
               class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
@@ -194,7 +195,8 @@ import { createApp } from 'vue' import './assets/index.css' import App from
             class="flex-grow flex items-center justify-center"
           >
             <div
-              class="collage-container w-[16cm] max-w-2xl mx-auto"
+              class="collage-container max-w-2xl mx-auto"
+              :class="{ 'w-[16cm]': layout !== '2x4' }"
               :style="{
                 gap: `${spacing}px`,
                 backgroundColor: 'white',
@@ -211,46 +213,75 @@ import { createApp } from 'vue' import './assets/index.css' import App from
                 class="w-fit"
                 :style="{ gap: `${spacing}px` }"
               >
-              <div 
-  v-for="(cell, index) in cellCount" 
-  :key="index"
-  class="!w-[3.5cm] !h-[4.5cm] relative bg-slate-700 rounded overflow-hidden flex items-center justify-center border"
-  @click="handlePhotoClick(index)"
->
-  <div v-if="photos[index]" class="group">
-    <img 
-      :src="photos[index].url" 
-      class="w-full h-full object-cover"
-      :style="{ 
-        filter: `
+                <div
+                  v-for="(cell, index) in cellCount"
+                  :key="index"
+                  class="!w-[3.5cm] !h-[4.5cm] relative bg-slate-700 overflow-hidden flex items-center justify-center cursor-pointer"
+                  @click="handlePhotoClick(index)"
+                >
+                  <div v-if="photos[index]" class="group">
+                    <img
+                      :src="photos[index].url"
+                      class="w-full h-full object-cover"
+                      :style="{
+                        filter: `
           brightness(${photos[index].adjustments.brightness}%)
           contrast(${photos[index].adjustments.contrast}%)
           ${getFilterStyle}
-        ` 
-      }"
-    />
-    <button 
-      @click.stop="removePhoto(index)"
-      class="hidden group-hover:inline-block absolute top-2 right-2 bg-slate-900/70 text-white p-1 rounded-full hover:bg-red-500/70 transition-colors"
-    >
-      <X class="h-4 w-4" />
-    </button>
-    <div 
-      v-if="activePhotoIndex === index"
-      class="absolute inset-0 border-2 border-blue-400 pointer-events-none"
-    ></div>
-  </div>
-  <template v-else>
-    <ImagePlus class="h-8 w-8 text-slate-500" />
-    <span class="text-xs text-slate-500 absolute bottom-2">Click to add photo</span>
-  </template>
-</div>
+        `,
+                      }"
+                    />
+                    <button
+                      @click.stop="removePhoto(index)"
+                      class="hidden group-hover:inline-block absolute top-2 right-2 bg-slate-900/70 text-white p-1 rounded-full hover:bg-red-500/70 transition-colors"
+                    >
+                      <X class="h-4 w-4" />
+                    </button>
+                    <div
+                      v-if="activePhotoIndex === index"
+                      class="absolute inset-0 pointer-events-none"
+                    ></div>
+                  </div>
+                  <template v-else>
+                    <ImagePlus class="h-8 w-8 text-slate-500" />
+                    <span class="text-xs text-slate-500 absolute bottom-2"
+                      >Click to add photo</span
+                    >
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Photo Library -->
+          <div
+            v-if="photoLibrary.length > 0"
+            class="bg-slate-800 rounded-xl p-5"
+          >
+            <h2 class="text-xl font-semibold mb-4">Your Photo Library</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+              <div
+                v-for="(photo, index) in photoLibrary"
+                :key="index"
+                class="aspect-square rounded overflow-hidden relative group cursor-pointer"
+                @click="addPhotoFromLibrary(photo)"
+              >
+                <img :src="photo.url" class="w-full h-full object-cover" />
+                <div
+                  class="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/20 transition-colors flex items-center justify-center"
+                >
+                  <button
+                    class="opacity-0 group-hover:opacity-100 bg-blue-600 text-white p-2 rounded-full transition-opacity"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Drag & Drop Zone -->
-          <div
+          <!--  <div
             class="mt-4 border-2 border-dashed border-slate-700 rounded-lg p-6 text-center"
             :class="{ 'border-blue-500 bg-blue-500/5': isDragging }"
             @dragover.prevent="isDragging = true"
@@ -274,34 +305,7 @@ import { createApp } from 'vue' import './assets/index.css' import App from
             <p class="text-xs text-slate-500 mt-1">
               Supports JPG, PNG, GIF (max 5MB)
             </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Photo Library -->
-      <div
-        v-if="photoLibrary.length > 0"
-        class="mt-8 bg-slate-800 rounded-xl p-5"
-      >
-        <h2 class="text-xl font-semibold mb-4">Your Photo Library</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
-          <div
-            v-for="(photo, index) in photoLibrary"
-            :key="index"
-            class="aspect-square rounded overflow-hidden relative group cursor-pointer"
-            @click="addPhotoFromLibrary(photo)"
-          >
-            <img :src="photo.url" class="w-full h-full object-cover" />
-            <div
-              class="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/20 transition-colors flex items-center justify-center"
-            >
-              <button
-                class="opacity-0 group-hover:opacity-100 bg-blue-600 text-white p-2 rounded-full transition-opacity"
-              >
-                <Plus class="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
@@ -323,7 +327,7 @@ import html2canvas from "html2canvas";
 
 // State
 const layout = ref("2x2");
-const spacing = ref(20);
+const spacing = ref(4);
 const borderColor = ref("#3b82f6"); // blue-500
 const filter = ref("none");
 const photos = ref([]);
@@ -440,7 +444,7 @@ const removePhoto2 = (index) => {
 
 // Modified addPhoto function
 const addPhoto = (file, index) => {
-  if (file.type.match('image.*')) {
+  if (file.type.match("image.*")) {
     const reader = new FileReader();
     reader.onload = (e) => {
       const photoObj = {
@@ -449,18 +453,18 @@ const addPhoto = (file, index) => {
         type: file.type,
         adjustments: {
           brightness: 100,
-          contrast: 100
-        }
+          contrast: 100,
+        },
       };
-      
+
       const newPhotos = [...photos.value];
       newPhotos[index] = photoObj;
       photos.value = newPhotos;
-      
-      if (!photoLibrary.value.some(p => p.url === photoObj.url)) {
-        photoLibrary.value.push({...photoObj});
+
+      if (!photoLibrary.value.some((p) => p.url === photoObj.url)) {
+        photoLibrary.value.push({ ...photoObj });
       }
-      
+
       activePhotoIndex.value = index;
     };
     reader.readAsDataURL(file);
@@ -474,7 +478,6 @@ const removePhoto = (index) => {
   photos.value = newPhotos;
   activePhotoIndex.value = null;
 };
-
 
 const handleFileSelect = (event) => {
   const files = event.target.files;
@@ -542,21 +545,48 @@ const handleDrop = (event) => {
 };
 
 const downloadCollage = async () => {
-  if (!collageRef.value) return;
-
   try {
-    const canvas = await html2canvas(
-      collageRef.value.querySelector(".collage-container")
-    );
-    const dataUrl = canvas.toDataURL("image/png");
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
+    // Set canvas size to match the collage container's actual size
+    const collageContainer = document.querySelector(".collage-container");
+    if (!collageContainer) return;
+
+    // Get the actual dimensions of the collage container
+    const rect = collageContainer.getBoundingClientRect();
+    const scale = window.devicePixelRatio; // Get the device pixel ratio
+
+    // Set canvas size accounting for device pixel ratio
+    canvas.width = rect.width * scale;
+    canvas.height = rect.height * scale;
+
+    // Scale the context to match the device pixel ratio
+    ctx.scale(scale, scale);
+
+    // Set white background
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Convert collage container to data URL
+    const dataUrl = await html2canvas(collageContainer, {
+      scale: scale * 5, // Use device pixel ratio for scaling
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: "white",
+      logging: false,
+      width: rect.width,
+      height: rect.height,
+    }).then((canvas) => canvas.toDataURL("image/png"));
+
+    // Create download link
     const link = document.createElement("a");
-    link.download = `collage-${new Date().getTime()}.png`;
+    link.download = "collage.png";
     link.href = dataUrl;
     link.click();
   } catch (error) {
-    console.error("Error generating collage:", error);
-    alert("Failed to download collage. Please try again.");
+    console.error("Error downloading collage:", error);
   }
 };
 
@@ -635,19 +665,29 @@ const printCollage = async () => {
 // Modified getFilterStyle computed property
 const getFilterStyle = computed(() => {
   const activeFilter = filter.value;
-  let filterStyle = '';
-  
+  let filterStyle = "";
+
   if (activePhotoIndex.value !== null) {
     const adjustments = photos.value[activePhotoIndex.value]?.adjustments || {};
     filterStyle += `brightness(${adjustments.brightness}%) contrast(${adjustments.contrast}%) `;
   }
 
   switch (activeFilter) {
-    case 'grayscale': filterStyle += 'grayscale(1)'; break;
-    case 'sepia': filterStyle += 'sepia(0.7)'; break;
-    case 'blur': filterStyle += 'blur(1px)'; break;
-    case 'brightness': filterStyle += 'brightness(1.2)'; break;
-    case 'contrast': filterStyle += 'contrast(1.5)'; break;
+    case "grayscale":
+      filterStyle += "grayscale(1)";
+      break;
+    case "sepia":
+      filterStyle += "sepia(0.7)";
+      break;
+    case "blur":
+      filterStyle += "blur(1px)";
+      break;
+    case "brightness":
+      filterStyle += "brightness(1.2)";
+      break;
+    case "contrast":
+      filterStyle += "contrast(1.5)";
+      break;
   }
 
   return filterStyle.trim();
@@ -655,33 +695,33 @@ const getFilterStyle = computed(() => {
 
 // Load saved settings on mount
 onMounted(() => {
-  const savedData = localStorage.getItem('collageSettings');
+  const savedData = localStorage.getItem("collageSettings");
   if (savedData) {
     try {
       const parsedData = JSON.parse(savedData);
-      layout.value = parsedData.layout || '2x2';
+      layout.value = parsedData.layout || "2x2";
       spacing.value = parsedData.spacing ?? 20;
-      filter.value = parsedData.filter || 'none';
+      filter.value = parsedData.filter || "none";
       photos.value = parsedData.photos || [];
       photoLibrary.value = parsedData.photoLibrary || [];
-      
+
       // Initialize adjustments for legacy data
-      photos.value = photos.value.map(photo => ({
+      photos.value = photos.value.map((photo) => ({
         ...photo,
-        adjustments: photo.adjustments || { brightness: 100, contrast: 100 }
+        adjustments: photo.adjustments || { brightness: 100, contrast: 100 },
       }));
     } catch (e) {
-      console.error('Error loading saved settings:', e);
+      console.error("Error loading saved settings:", e);
     }
   }
 });
 
 // Update resetCollage function
 const resetCollage = () => {
-  localStorage.removeItem('collageSettings');
-  layout.value = '2x2';
+  localStorage.removeItem("collageSettings");
+  layout.value = "2x2";
   spacing.value = 20;
-  filter.value = 'none';
+  filter.value = "none";
   photos.value = Array(cellCount.value).fill(null);
   photoLibrary.value = [];
   activePhotoIndex.value = null;
@@ -692,7 +732,7 @@ const handlePhotoClick = (index) => {
     activePhotoIndex.value = index;
     photoAdjustments.value = {
       brightness: photos.value[index].adjustments.brightness,
-      contrast: photos.value[index].adjustments.contrast
+      contrast: photos.value[index].adjustments.contrast,
     };
   } else {
     openFileSelector(index);
@@ -704,15 +744,14 @@ watchEffect(() => {
   if (activePhotoIndex.value !== null && photos.value[activePhotoIndex.value]) {
     photos.value[activePhotoIndex.value].adjustments = {
       brightness: photoAdjustments.value.brightness,
-      contrast: photoAdjustments.value.contrast
+      contrast: photoAdjustments.value.contrast,
     };
   }
 });
 
-
 const photoAdjustments = ref({
   brightness: 100,
-  contrast: 100
+  contrast: 100,
 });
 
 // Watch for changes in settings and photos to save to localStorage
@@ -722,11 +761,10 @@ watchEffect(() => {
     spacing: spacing.value,
     filter: filter.value,
     photos: photos.value,
-    photoLibrary: photoLibrary.value
+    photoLibrary: photoLibrary.value,
   };
-  localStorage.setItem('collageSettings', JSON.stringify(saveData));
+  localStorage.setItem("collageSettings", JSON.stringify(saveData));
 });
-
 
 // Initialize photos array based on default layout
 onMounted(() => {
@@ -781,5 +819,12 @@ input[type="range"]::-moz-range-thumb {
 input[type="range"]::-moz-range-thumb:hover {
   transform: scale(1.1);
   background: #60a5fa;
+}
+</style>
+
+<style>
+/* Add this at the top of your style section */
+:root {
+  /* zoom: 120%; */
 }
 </style>
